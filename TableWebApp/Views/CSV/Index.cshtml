@@ -1,0 +1,342 @@
+﻿@{
+    ViewData["Title"] = "CSV Data";
+}
+
+<h2>Upload CSV File</h2>
+
+<form asp-controller="CSV" asp-action="Upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file" />
+    <input type="submit" value="Upload" />
+</form>
+
+
+
+<h2>CSV Data</h2>
+
+<div id="filter-sort-container">
+    <label for="filter-column">Filter By:</label>
+    <select id="filter-column">
+        <option value="">-- Select Column --</option>
+        <option value="Name">Name</option>
+        <option value="DateOfBirth">Date of Birth</option>
+        <option value="Married">Married</option>
+        <option value="Phone">Phone</option>
+        <option value="Salary">Salary</option>
+    </select>
+
+    <label for="filter-value">Filter Value:</label>
+    <input type="text" id="filter-value" />
+
+    <button id="filter-button">Filter</button>
+
+    <label for="sort-column">Sort By:</label>
+    <select id="sort-column">
+        <option value="">-- Select Column --</option>
+        <option value="Name">Name</option>
+        <option value="DateOfBirth">Date of Birth</option>
+        <option value="Married">Married</option>
+        <option value="Phone">Phone</option>
+        <option value="Salary">Salary</option>
+    </select>
+
+    <button id="sort-asc-button">Sort Ascending</button>
+    <button id="sort-desc-button">Sort Descending</button>
+
+    <button id="reset-button">Reset All(For Sort and Filter)</button>
+    <button id="delete-all-button">Delete All Records </button>
+
+
+</div>
+
+@model List<CSVData>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>№</th>
+            <th>Name</th>
+            <th>Date of Birth</th>
+            <th>Married</th>
+            <th>Phone</th>
+            <th>Salary</th>
+            <th></th> <!-- Empty header cell for delete button column -->
+        </tr>
+    </thead>
+    <tbody>
+        @for (int i = 0; i < Model.Count; i++)
+        {
+            var item = Model[i];
+            <tr class="data-row">
+                <td>@(i + 1)</td> <!-- Add numbering -->
+                <td>
+                    <span class="editable-field" data-field="Name" data-id="@item.Id">@item.Name</span>
+                </td>
+                <td>
+                    <span class="editable-field" data-field="DateOfBirth" data-id="@item.Id">@item.DateOfBirth.ToShortDateString()</span>
+                </td>
+                <td>
+                    <span class="editable-field" data-field="Married" data-id="@item.Id">@item.Married</span>
+                </td>
+                <td>
+                    <span class="editable-field" data-field="Phone" data-id="@item.Id">@item.Phone</span>
+                </td>
+                <td>
+                    <span class="editable-field" data-field="Salary" data-id="@item.Id">@item.Salary</span>
+                </td>
+                <td>
+                    @Html.ActionLink("Delete", "Delete", new { id = item.Id }, new { onclick = "return confirm('Are you sure you want to delete this record?');" })
+                </td>
+            </tr>
+        }
+    </tbody>
+
+</table>
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha384-Qqa50p9TZNbSeOuIAzrQR6k2hMuukH5O/d5dZaZ3cW4aDylbL2M00IMoXZtTTAii" crossorigin="anonymous"></script>
+
+    <script>
+
+
+
+        $(document).ready(function () {
+
+            $('.table').on('click', '.editable-field', function () {
+                startEditing($(this));
+            });
+
+            $('#filter-button').on('click', function () {
+                applyFilter();
+            });
+
+            $('#sort-asc-button').on('click', function () {
+                sortData('asc');
+            });
+
+            $('#sort-desc-button').on('click', function () {
+                sortData('desc');
+            });
+            $('#reset-button').on('click', function () {
+                resetFilters();
+            });
+            $('#delete-all-button').on('click', function () {
+                deleteAllRecords();
+
+            });
+        });
+
+
+
+        function applyFilter() {
+            var column = $('#filter-column').val();
+            var value = $('#filter-value').val().trim().toLowerCase();
+
+            $('.data-row').hide(); // Сховати всі рядки
+
+            // Показати рядки, що відповідають фільтру
+            $('.data-row').each(function () {
+                var fieldValue = $(this).find('[data-field="' + column + '"]').text().trim().toLowerCase();
+
+                if (column === 'DateOfBirth' || column === 'Name') {
+                    var fieldValues = fieldValue.split(' ');
+
+                    var matches = fieldValues.filter(function (fieldPart) {
+                        return fieldPart.toLowerCase().includes(value);
+                    });
+
+                    if (matches.length > 0) {
+                        $(this).show();
+                    }
+                } else {
+                    if (fieldValue.indexOf(value) === 0) {
+                        $(this).show();
+                    }
+                }
+            });
+        }
+
+
+        function sortData(order) {
+            var column = $('#sort-column').val();
+
+            var sortedRows = $('.data-row').toArray().sort(function (a, b) {
+                var aValue = $(a).find('[data-field="' + column + '"]').text();
+                var bValue = $(b).find('[data-field="' + column + '"]').text();
+
+                // Special handling for Date of Birth field
+                if (column === 'DateOfBirth') {
+                    aValue = convertToDateObject(aValue);
+                    bValue = convertToDateObject(bValue);
+                }
+
+                if (order === 'asc') {
+                    return compareValues(aValue, bValue);
+                } else {
+                    return compareValues(bValue, aValue);
+                }
+            });
+
+            $('.data-row').remove(); // Remove all rows
+
+            // Add rows in the sorted order
+            $('.table').append(sortedRows);
+        }
+
+        function compareValues(a, b) {
+            if (typeof a === 'number' && typeof b === 'number') {
+                return a - b;
+            } else if (typeof a === 'string' && typeof b === 'string') {
+                return a.localeCompare(b);
+            } else {
+                return 0;
+            }
+        }
+
+
+        function isDecimalWithComma(value) {
+            var decimalRegex = /^\d+,\d+$/;
+            return decimalRegex.test(value);
+        }
+
+        function convertToDateObject(dateString) {
+            var parts = dateString.split('.');
+            var day = parseInt(parts[0]);
+            var month = parseInt(parts[1]);
+            var year = parseInt(parts[2]);
+
+            return new Date(year, month - 1, day);
+        }
+
+
+        function updateField(id, field, value) {
+            $.ajax({
+                url: '/CSV/UpdateField',
+                type: 'POST',
+                data: { id: id, field: field, value: value },
+                success: function () {
+                    console.log('Field updated successfully.');
+                },
+                error: function () {
+                    console.error('Error updating field.');
+                }
+            });
+        }
+
+        function resetFilters() {
+            // Reload the page to reset the filters and sorting
+            location.reload();
+        }
+
+        function startEditing($field) {
+            var field = $field.data('field');
+            var id = $field.data('id');
+            var value = $field.text();
+
+            var $input = $('<input>', { type: 'text', value: value });
+            $field.html($input);
+
+            $input.focus().val(value);
+
+            $input.on('click', function (event) {
+                event.stopPropagation();
+            });
+
+            $input.on('keydown', function (event) {
+                if (event.which === 13) { // Enter key
+                    event.preventDefault();
+
+                    var newValue = $input.val();
+                    if (validateField(field, newValue)) {
+                        $field.html(newValue);
+                        updateField(id, field, newValue);
+
+                    } else {
+                        $field.html(value); // Restore the original value
+                    }
+                }
+            });
+
+            $input.on('blur', function () {
+                var newValue = $input.val();
+                if (validateField(field, newValue)) {
+                    $field.html(newValue);
+                    updateField(id, field, newValue);
+
+                } else {
+                    $field.html(value); // Restore the original value
+                }
+            });
+
+        }
+
+        function validateField(field, value) {
+            if (field === 'Name' && !isValidName(value)) {
+                alert('Name should not exceed 30 characters and not be number!');
+                return false;
+            }
+            else if (field === 'DateOfBirth' && !isValidDate(value)) {
+                alert('Invalid Date of Birth. Example 15.05.1990');
+                return false;
+            }
+            else if (field === 'Married' && !isValidBoolean(value)) {
+                alert('Invalid Married value. Please enter either "True" or "False".');
+                return false;
+            }
+            else if (field === 'Phone' && !isValidPhone(value)) {
+                alert('Invalid Phone number. The phone number must contain 10 digits.');
+                return false;
+            }
+            else if (field === 'Salary' && !isValidSalary(value)) {
+                alert('Invalid Salary value. The value cannot be negative.');
+                return false;
+            }
+
+            return true;
+        }
+
+        function isValidName(value) {
+            return typeof value === 'string' && !/^\d+$/.test(value) && value.length <= 30;
+        }
+
+        function isValidDate(value) {
+            var dateRegex = /^\d{2}.\d{2}.\d{4}$/;
+            return dateRegex.test(value);
+        }
+
+        function isValidBoolean(value) {
+            return value === 'True' || value === 'False';
+        }
+
+        function isValidPhone(value) {
+            // This is just a placeholder example
+            var phoneRegex = /^\d{10}$/;
+            return phoneRegex.test(value);
+        }
+
+        function isValidSalary(value) {
+            if (value < 0) {
+                return false; // Повертаємо false, якщо значення є від'ємним
+            }
+            return /^\d+(,\d+)?$/.test(value);
+        }
+
+
+        function deleteAllRecords() {
+            if (confirm('Are you sure you want to delete all records?')) {
+                $.ajax({
+                    url: '/CSV/DeleteAll',
+                    type: 'POST',
+                    success: function () {
+                        $('.data-row').remove(); // Remove all rows from the table
+                        console.log('All records deleted successfully.');
+                    },
+                    error: function () {
+                        console.error('Error deleting records.');
+                    }
+                });
+            }
+
+        }
+
+    </script>
+}

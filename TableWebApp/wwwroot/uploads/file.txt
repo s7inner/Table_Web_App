@@ -1,0 +1,11 @@
+Name,Date of birth,Married,Phone,Salary
+Peter Brown,1978-09-03,true,3456789012,800
+Sarah Johnson,1992-07-10,false,2345678901,600
+Michael Davis,1983-02-18,true,8765432109,700
+Emily Wilson,1995-11-27,false,4567890123,550
+David Lee,1987-06-12,false,5678901234,450
+Jennifer Thompson,1991-03-25,true,8901234567,750
+Christopher Miller,1989-08-07,true,6789012345,650
+Amanda Taylor,1984-04-14,false,7890123456,550
+Matthew Anderson,1993-01-09,false,9012345678,600
+Samantha Martinez,1986-10-22,true,0123456789,700
