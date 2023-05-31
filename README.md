@@ -1,5 +1,9 @@
 # Table_Web_App
 
+The file with an example of input data is named "file.txt," and the backup file of the database is named "AppTableDb.bak."
+
+The web application implements all the specified functionalities, including filtering, sorting, inline editing of any row, and deleting rows. Validation is also implemented on the client-side (Input.cshtml) using windows on the page, as well as on the server-side in the CSVData class.
+
 The following functionalities are present in this code:
 
 1. "Upload" button - When clicked, this button sends the form to the server to upload the selected CSV file.
